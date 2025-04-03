@@ -52,6 +52,7 @@ import logging
 import os
 from apps.calculator.calculator import Calculator
 from apps.core.config import get_setting
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +172,7 @@ class CalculationView(APIView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.calculation_service = CalculationService()
+        self.logger = logging.getLogger(__name__)
 
     @extend_schema(
         request=SingleCalculationRequestSerializer,
@@ -180,100 +182,80 @@ class CalculationView(APIView):
     @handle_calculation_error
     @db_connection_retry(max_retries=3, retry_delay=0.5)
     def post(self, request, *args, **kwargs):
-        """处理运费计算请求"""
+        """处理计算请求"""
         try:
-            # 日志记录请求信息
-            logger.info(f"接收到运费计算请求: {request.data}")
+            # 记录请求开始
+            self.logger.info(f"收到计算请求: {request.data}")
+            print(f"收到计算请求: {request.data}", file=sys.stdout)
             
-            # 验证请求数据
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True)
+            # 读取额外调试参数
+            return_calculation_details = request.data.get('return_calculation_details', False)
+            return_debug_info = request.data.get('return_debug_info', False)
+            return_surcharge_matches = request.data.get('return_surcharge_matches', False)
+            show_calculation_process = request.data.get('show_calculation_process', False)
             
-            # 保证邮编不为空
-            validated_data = serializer.validated_data
-            if not validated_data.get('from_postal'):
-                raise InvalidParameterException("起始邮编不能为空")
-            if not validated_data.get('to_postal'):
-                raise InvalidParameterException("目的地邮编不能为空")
+            # 执行计算逻辑
+            try:
+                calculator = Calculator()
+                result = calculator.calculate(request.data)
                 
-            # 计算运费
-            result = self.calculation_service.calculate_single(validated_data)
-            
-            # 确保计算详情字段存在
-            if 'calculation_details' not in result or not result['calculation_details']:
-                logger.info("API响应没有计算详情，添加默认详情")
+                # 检查计算结果是否有错误
+                if 'error' in result:
+                    self.logger.error(f"计算过程中出错: {result['error']}")
+                    print(f"计算过程中出错: {result['error']}", file=sys.stdout)
+                    return Response(
+                        {'error': result['error'], 'code': result.get('code', 'CALCULATION_ERROR')},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 
-                # 创建默认计算详情
-                details = [
-                    {
-                        'step': '基本信息',
-                        'description': '计算请求的基本参数',
-                        'details': f"""
-                        产品ID: {result.get('product_code', 'N/A')}
-                        起始邮编: {validated_data.get('from_postal', '')}
-                        目的邮编: {validated_data.get('to_postal', '')}
-                        重量: {validated_data.get('weight', '')} {validated_data.get('weight_unit') or get_setting('DEFAULT_WEIGHT_UNIT')}
-                        尺寸: {validated_data.get('length', '0')}x{validated_data.get('width', '0')}x{validated_data.get('height', '0')} 
-                        计算日期: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-                        """
-                    },
-                    {
-                        'step': '重量计算',
-                        'description': '计算体积重和计费重量',
-                        'details': f"""
-                        实际重量: {validated_data.get('weight', '')} {validated_data.get('weight_unit') or get_setting('DEFAULT_WEIGHT_UNIT')}
-                        体积重量: {result.get('volume_weight', '0')} 
-                        计费重量: {result.get('chargeable_weight', '0')}
-                        """
-                    },
-                    {
-                        'step': '基础运费计算',
-                        'description': '计算基础运费',
-                        'details': f"""
-                        费用类型: 基础运费
-                        金额: {result.get('base_fee', '0')}
-                        区域: {result.get('zone', 'N/A')}
-                        """
-                    },
-                    {
-                        'step': '燃油附加费计算',
-                        'description': '根据燃油费率计算燃油附加费',
-                        'details': f"""
-                        费用名称: 燃油附加费
-                        金额: {result.get('fuel_surcharge', '0')}
-                        """
-                    },
-                    {
-                        'step': '费用汇总',
-                        'description': '计算总费用',
-                        'details': f"""
-                        基础运费: {result.get('base_fee', '0')}
-                        燃油附加费: {result.get('fuel_surcharge', '0')}
-                        总费用: {result.get('total_fee', '0')} {result.get('currency', 'USD')}
-                        计算公式: 总费用 = 基础运费 + 燃油附加费 + 其他附加费总和
-                        """
-                    }
-                ]
+                # 处理调试信息
+                if not return_calculation_details:
+                    result.pop('calculation_details', None)
                 
-                # 添加到结果中
-                result['calculation_details'] = details
-                logger.info(f"已添加 {len(details)} 个默认计算详情步骤")
-            
-            # 返回结果
-            return Response(result)
-            
-        except InvalidParameterException as e:
-            logger.warning(f"无效参数: {str(e)}")
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except ProductNotFoundException as e:
-            logger.warning(f"产品不存在: {str(e)}")
-            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        except CalculationException as e:
-            logger.error(f"计算失败: {str(e)}")
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            logger.exception(f"运费计算未处理异常: {str(e)}")
-            return Response({"error": "服务器内部错误"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                if not return_debug_info:
+                    result.pop('debug_info', None)
+                
+                if not return_surcharge_matches:
+                    result.pop('surcharge_matches', None)
+                
+                # 返回成功结果
+                return Response(result, status=status.HTTP_200_OK)
+                
+            except ValueError as ve:
+                # 处理参数错误
+                error_msg = f"参数错误: {str(ve)}"
+                self.logger.error(error_msg)
+                print(error_msg, file=sys.stdout)
+                return Response(
+                    {'error': error_msg, 'code': 'INVALID_PARAMETER'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            except Exception as e:
+                # 处理其他错误
+                error_msg = f"计算过程中出错: {str(e)}"
+                self.logger.error(error_msg)
+                import traceback
+                self.logger.error(f"详细错误: {traceback.format_exc()}")
+                print(error_msg, file=sys.stdout)
+                print(f"详细错误: {traceback.format_exc()}", file=sys.stdout)
+                return Response(
+                    {'error': error_msg, 'code': 'CALCULATION_ERROR'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as outer_e:
+            # 处理视图方法级别的异常
+            error_msg = f"处理请求时出错: {str(outer_e)}"
+            self.logger.error(error_msg)
+            import traceback
+            self.logger.error(f"详细错误: {traceback.format_exc()}")
+            print(error_msg, file=sys.stdout)
+            print(f"详细错误: {traceback.format_exc()}", file=sys.stdout)
+            return Response(
+                {'error': error_msg, 'code': 'VIEW_ERROR'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 @extend_schema(tags=['运费计算'])
 class BatchCalculationView(APIView):

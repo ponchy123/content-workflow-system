@@ -36,6 +36,7 @@ from apps.products.models import BaseFee, Surcharge
 from apps.postal_codes.models import ZipZone
 from apps.fuel_rates.models import FuelRate
 from apps.core.config import get_setting, DEFAULT_ZONE
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -646,47 +647,111 @@ class BaseCalculationService:
             logger.exception("计算运费失败", extra={'data': str(data)[:1000]})
             raise CalculationException(f"计算运费失败: {str(e)}")
             
-    def _get_zone(self, from_postal: str, to_postal: str) -> str:
+    def _get_zone(self, from_postal, to_postal):
         """
-        获取分区信息
+        获取从from_postal到to_postal的分区号
         
         Args:
-            from_postal: 起始邮编
-            to_postal: 目的邮编
+            from_postal: 始发邮编
+            to_postal: 目的地邮编
             
         Returns:
-            str: 分区信息
+            str: 分区号，例如'ZONE1', 'ZONE2'等
         """
+        # 加载ZipZone模型，避免循环导入
         from apps.postal_codes.models import ZipZone
         import sys
-        from django.conf import settings
-        from apps.core.config import get_setting
         
         try:
-            print(f"查询区域: 从 {from_postal} 到 {to_postal}", file=sys.stdout)
+            print(f"正在查询区域信息: 从 {from_postal} 到 {to_postal}", file=sys.stdout)
+            self.logger.info(f"正在查询区域信息: 从 {from_postal} 到 {to_postal}")
             
-            # 查询匹配的邮编区域
-            zone_record = ZipZone.objects.filter(
-                origin_zip=from_postal,
-                dest_zip_start__lte=to_postal,
-                dest_zip_end__gte=to_postal,
-                is_deleted=False
-            ).first()
+            # 检查起始邮编和目的邮编是否有效
+            if not from_postal or not to_postal:
+                print(f"警告: 邮编为空，from_postal={from_postal}, to_postal={to_postal}", file=sys.stdout)
+                self.logger.warning(f"邮编为空，from_postal={from_postal}, to_postal={to_postal}")
+                return "ZONE1"  # 返回默认区域
+                
+            # 规范化邮编
+            from_postal = str(from_postal).strip().upper()
+            to_postal = str(to_postal).strip().upper()
             
-            if zone_record:
-                zone_number = zone_record.zone_number
-                zone_code = f"ZONE{zone_number}"
-                print(f"找到区域: {zone_code}", file=sys.stdout)
-                return zone_code
+            # 尝试从缓存获取
+            cache_key = f"zipzone_{from_postal}_{to_postal}"
+            cached_zone = cache.get(cache_key)
+            if cached_zone:
+                print(f"从缓存获取到区域信息: {cached_zone}", file=sys.stdout)
+                return cached_zone
+            
+            # 查询数据库
+            zone_obj = None
+            try:
+                # 获取当前产品对应的服务提供商
+                # 注意：如果没有provider_id，我们简单地查询所有区域
+                provider_filter = {}
+                
+                # 先匹配精确的邮编
+                zone_obj = ZipZone.objects.filter(
+                    origin_zip=from_postal,
+                    dest_zip_start__lte=to_postal,
+                    dest_zip_end__gte=to_postal,
+                    **provider_filter
+                ).first()
+                
+                if not zone_obj:
+                    # 再匹配邮编前缀
+                    to_prefix = to_postal[:3] if len(to_postal) >= 3 else to_postal
+                    zone_obj = ZipZone.objects.filter(
+                        origin_zip=from_postal,
+                        dest_zip_start__lte=to_prefix,
+                        dest_zip_end__gte=to_prefix,
+                        **provider_filter
+                    ).first()
+                
+                if not zone_obj:
+                    # 使用默认区域
+                    print(f"未找到区域信息，尝试使用通配符", file=sys.stdout)
+                    default_origin = from_postal  # 先尝试当前始发地的通配符
+                    
+                    zone_obj = ZipZone.objects.filter(
+                        origin_zip=default_origin,
+                        dest_zip_start='*',
+                        dest_zip_end='*',
+                        **provider_filter
+                    ).first()
+                    
+                    if not zone_obj:
+                        # 尝试任意始发地的通配符
+                        zone_obj = ZipZone.objects.filter(
+                            origin_zip='*',
+                            dest_zip_start='*',
+                            dest_zip_end='*',
+                            **provider_filter
+                        ).first()
+                    
+            except Exception as db_err:
+                print(f"查询区域数据库出错: {str(db_err)}", file=sys.stdout)
+                self.logger.error(f"查询区域数据库出错: {str(db_err)}")
+                return "ZONE1"  # 返回默认区域
+            
+            # 获取区域号
+            if zone_obj:
+                zone = f"ZONE{zone_obj.zone_number}"
+                # 设置缓存
+                cache.set(cache_key, zone, 3600)  # 缓存1小时
+                print(f"找到区域: {zone}", file=sys.stdout)
+                return zone
             else:
-                print(f"未找到匹配区域，使用默认区域", file=sys.stdout)
-                return get_setting('DEFAULT_ZONE')
+                total_zones = ZipZone.objects.count()
+                print(f"未找到区域信息，使用默认区域ZONE1。数据库中有{total_zones}条区域记录。", file=sys.stdout)
+                self.logger.warning(f"未找到区域信息: 从 {from_postal} 到 {to_postal}，使用默认区域ZONE1")
+                return "ZONE1"  # 返回默认区域
                 
         except Exception as e:
-            print(f"查询区域出错: {str(e)}", file=sys.stdout)
-            logger.error(f"查询区域出错: {str(e)}")
-            return get_setting('DEFAULT_ZONE')
-        
+            print(f"获取区域信息时发生错误: {str(e)}", file=sys.stdout)
+            self.logger.error(f"获取区域信息时发生错误: {str(e)}")
+            return "ZONE1"  # 返回默认区域
+    
     def _calculate_surcharges(self, product: Product, data: Dict[str, Any], 
                               chargeable_weight: Decimal, zone: str) -> List[Dict]:
         """
