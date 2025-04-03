@@ -21,6 +21,9 @@ var/
 *.egg
 .ipynb_checkpoints
 venv/
+virtualenv/
+.venv/
+ENV/
 
 # Django
 *.log
