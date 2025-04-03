@@ -1,0 +1,36 @@
+/* 字体系统 */
+:root {
+  /* 字体大小 */
+  --font-size-mini: 12px;
+  --font-size-small: 13px;
+  --font-size-base: 14px;
+  --font-size-medium: 16px;
+  --font-size-large: 18px;
+  --font-size-extra-large: 20px;
+
+  /* 字体粗细 */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* 行高 */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* 字体族 */
+  --font-family-base: var(--el-font-family);
+  --font-family-code: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+
+  /* 标题大小 */
+  --font-size-h1: 24px;
+  --font-size-h2: 20px;
+  --font-size-h3: 18px;
+  --font-size-h4: 16px;
+  --font-size-h5: 14px;
+  --font-size-h6: 12px;
+
+  /* 标题行高 */
+  --line-height-heading: 1.25;
+} 

@@ -1,0 +1,139 @@
+:root {
+  /* Form Layout */
+  --form-max-width: 1200px;
+  --form-padding: 20px;
+  --form-margin: 15px auto;
+  --form-gap: 16px;
+  
+  /* Form Item */
+  --form-item-margin-bottom: 16px;
+  --form-item-label-color: var(--el-text-color-regular);
+  --form-item-label-font-weight: 500;
+  --form-item-label-margin: 0;
+  --form-item-label-width: 45px;
+  --form-item-label-padding: 0 4px 0 0;
+  
+  /* Form Controls */
+  --form-control-width: calc(100% - 80px);
+  --form-control-gap: 4px;
+  --form-control-height: 32px;
+  
+  /* Input Number Controls */
+  --input-number-decrease-width: 32px;
+  --input-number-background: transparent;
+  --input-number-hover-background: var(--el-fill-color-light);
+  --input-number-border-color: var(--el-border-color-lighter);
+  --input-number-hover-color: var(--el-color-primary);
+  --input-number-disabled-color: var(--el-text-color-placeholder);
+  --input-number-disabled-background: var(--el-fill-color-light);
+  
+  /* Form Groups */
+  --form-group-margin: 20px 0;
+  --form-group-title-size: 16px;
+  --form-group-title-color: var(--el-text-color-primary);
+  --form-group-title-margin: 0 0 15px 0;
+  --form-group-padding: 16px;
+  --form-group-background: var(--el-bg-color-page);
+  --form-group-border-radius: var(--el-border-radius-base);
+  
+  /* Form Validation */
+  --form-error-color: var(--el-color-danger);
+  --form-error-font-size: var(--el-font-size-small);
+  --form-error-margin-top: 4px;
+  
+  /* Form Help Text */
+  --form-help-color: var(--el-text-color-secondary);
+  --form-help-font-size: var(--el-font-size-small);
+  --form-help-margin-top: 4px;
+
+  /* Unit Input */
+  --unit-input-select-width: 80px;
+  --unit-input-padding-right: 8px;
+  --unit-input-select-spacing: 4px;
+}
+
+/* Form Base Styles */
+.el-form {
+  max-width: var(--form-max-width);
+  padding: var(--form-padding);
+  margin: var(--form-margin);
+}
+
+.el-form-item {
+  margin-bottom: var(--form-item-margin-bottom);
+}
+
+.el-form-item__label {
+  color: var(--form-item-label-color);
+  font-weight: var(--form-item-label-font-weight);
+  margin: var(--form-item-label-margin);
+  display: block;
+}
+
+.el-form-item__content {
+  display: flex;
+  align-items: center;
+  gap: var(--form-control-gap);
+}
+
+/* Form Controls */
+.el-input,
+.el-input-number,
+.el-select,
+.el-date-picker {
+  width: var(--form-control-width);
+  height: var(--form-control-height);
+}
+
+/* Form Groups */
+.form-group {
+  margin: var(--form-group-margin);
+  padding: var(--form-group-padding);
+  background-color: var(--form-group-background);
+  border-radius: var(--form-group-border-radius);
+}
+
+.form-group-title {
+  font-size: var(--form-group-title-size);
+  color: var(--form-group-title-color);
+  margin: var(--form-group-title-margin);
+  font-weight: 500;
+}
+
+/* Form Validation */
+.el-form-item.is-error .el-form-item__error {
+  color: var(--form-error-color);
+  font-size: var(--form-error-font-size);
+  margin-top: var(--form-error-margin-top);
+}
+
+/* Form Help Text */
+.form-help-text {
+  color: var(--form-help-color);
+  font-size: var(--form-help-font-size);
+  margin-top: var(--form-help-margin-top);
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: var(--form-group-margin);
+}
+
+.form-section-title {
+  font-size: 18px;
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 768px) {
+  :root {
+    --form-padding: 16px;
+    --form-item-margin-bottom: 24px;
+    --form-group-padding: 16px;
+    --form-group-margin: 24px 0;
+  }
+} 

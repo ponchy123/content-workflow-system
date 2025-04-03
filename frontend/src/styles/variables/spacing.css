@@ -1,0 +1,32 @@
+/* 间距系统 */
+:root {
+  /* 基础间距 */
+  --spacing-mini: 4px;
+  --spacing-small: 8px;
+  --spacing-base: 16px;
+  --spacing-large: 24px;
+  --spacing-extra-large: 32px;
+
+  /* 简写别名 - 兼容两种命名方式 */
+  --spacing-xs: var(--spacing-mini);
+  --spacing-sm: var(--spacing-small);
+  --spacing-md: var(--spacing-base);
+  --spacing-lg: var(--spacing-large);
+  --spacing-xl: var(--spacing-extra-large);
+
+  /* 组件间距 */
+  --spacing-card-padding: var(--spacing-base);
+  --spacing-form-item: var(--spacing-large);
+  --spacing-section: var(--spacing-extra-large);
+
+  /* 布局间距 */
+  --spacing-layout-gutter: var(--spacing-base);
+  --spacing-layout-margin: var(--spacing-large);
+  --spacing-layout-padding: var(--spacing-base);
+
+  /* 响应式间距 */
+  --spacing-responsive-sm: calc(var(--spacing-base) * 0.75);
+  --spacing-responsive-md: var(--spacing-base);
+  --spacing-responsive-lg: calc(var(--spacing-base) * 1.25);
+  --spacing-responsive-xl: calc(var(--spacing-base) * 1.5);
+} 

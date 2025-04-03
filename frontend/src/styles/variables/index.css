@@ -1,0 +1,52 @@
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './form.css';
+@import './card.css';
+@import './layout.css';
+
+/* 其他全局变量 */
+:root {
+  /* Base */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-base: 14px;
+  --line-height-base: 1.5;
+  
+  /* Border */
+  --border-radius-base: 4px;
+  --border-radius-small: 2px;
+  --border-radius-large: 8px;
+  --border-width-base: 1px;
+  --border-style-base: solid;
+  --border-color-base: var(--el-border-color);
+  
+  /* Shadow */
+  --box-shadow-base: var(--el-box-shadow);
+  --box-shadow-light: var(--el-box-shadow-light);
+  --box-shadow-dark: var(--el-box-shadow-dark);
+  
+  /* Transition */
+  --transition-duration: 0.3s;
+  --transition-timing-function: ease-in-out;
+  
+  /* Z-index */
+  --z-index-normal: 1;
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+
+  /* 布局 */
+  --header-height: 60px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --footer-height: 60px;
+
+  /* 组件 */
+  --form-label-width: 120px;
+  --table-header-bg: var(--bg-color-light);
+  --table-row-hover-bg: var(--bg-color-lighter);
+} 

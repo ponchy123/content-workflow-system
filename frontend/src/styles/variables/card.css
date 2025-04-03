@@ -1,0 +1,94 @@
+:root {
+  /* Card Layout */
+  --card-padding: var(--el-spacing-large);
+  --card-margin: var(--el-spacing-base) 0;
+  --card-border-radius: var(--el-border-radius-base);
+  --card-box-shadow: var(--el-box-shadow-light);
+  
+  /* Card Header */
+  --card-header-padding: var(--el-spacing-base) var(--el-spacing-large);
+  --card-header-border-bottom: 1px solid var(--el-border-color-light);
+  --card-header-margin-bottom: var(--el-spacing-base);
+  
+  /* Card Title */
+  --card-title-font-size: var(--el-font-size-large);
+  --card-title-font-weight: 500;
+  --card-title-color: var(--el-text-color-primary);
+  --card-title-margin: 0;
+  
+  /* Card Content */
+  --card-content-padding: var(--el-spacing-large);
+  --card-content-background: var(--el-bg-color);
+  
+  /* Card Footer */
+  --card-footer-padding: var(--el-spacing-base) var(--el-spacing-large);
+  --card-footer-border-top: 1px solid var(--el-border-color-light);
+  --card-footer-margin-top: var(--el-spacing-base);
+}
+
+/* Card Base Styles */
+.el-card {
+  padding: var(--card-padding);
+  margin: var(--card-margin);
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--card-box-shadow);
+  background-color: var(--card-content-background);
+}
+
+/* Card Header */
+.el-card__header {
+  padding: var(--card-header-padding);
+  border-bottom: var(--card-header-border-bottom);
+  margin-bottom: var(--card-header-margin-bottom);
+}
+
+/* Card Title */
+.card-title {
+  font-size: var(--card-title-font-size);
+  font-weight: var(--card-title-font-weight);
+  color: var(--card-title-color);
+  margin: var(--card-title-margin);
+}
+
+/* Card Content */
+.el-card__body {
+  padding: var(--card-content-padding);
+}
+
+/* Card Footer */
+.card-footer {
+  padding: var(--card-footer-padding);
+  border-top: var(--card-footer-border-top);
+  margin-top: var(--card-footer-margin-top);
+}
+
+/* Card Variations */
+.card-primary {
+  border-top: 3px solid var(--el-color-primary);
+}
+
+.card-success {
+  border-top: 3px solid var(--el-color-success);
+}
+
+.card-warning {
+  border-top: 3px solid var(--el-color-warning);
+}
+
+.card-danger {
+  border-top: 3px solid var(--el-color-danger);
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--el-spacing-base);
+}
+
+/* Card Header with Actions */
+.card-header-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+} 

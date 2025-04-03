@@ -1,0 +1,50 @@
+/* 主题色 */
+:root {
+  /* 主色 */
+  --color-primary: var(--el-color-primary);
+  --color-primary-light-1: var(--el-color-primary-light-1);
+  --color-primary-light-3: var(--el-color-primary-light-3);
+  --color-primary-light-5: var(--el-color-primary-light-5);
+  --color-primary-light-7: var(--el-color-primary-light-7);
+  --color-primary-light-9: var(--el-color-primary-light-9);
+  --color-primary-dark-2: var(--el-color-primary-dark-2);
+
+  /* 功能色 */
+  --color-success: var(--el-color-success);
+  --color-warning: var(--el-color-warning);
+  --color-danger: var(--el-color-danger);
+  --color-info: var(--el-color-info);
+  --color-success-light: var(--el-color-success-light-9);
+  --color-warning-light: var(--el-color-warning-light-9);
+  --color-danger-light: var(--el-color-danger-light-9);
+  --color-info-light: var(--el-color-info-light-9);
+
+  /* 文本色 */
+  --text-color-primary: var(--el-text-color-primary);
+  --text-color-regular: var(--el-text-color-regular);
+  --text-color-secondary: var(--el-text-color-secondary);
+  --text-color-placeholder: var(--el-text-color-placeholder);
+  --text-color-disabled: var(--el-text-color-disabled);
+
+  /* 边框色 */
+  --border-color: var(--el-border-color);
+  --border-color-light: var(--el-border-color-light);
+  --border-color-lighter: var(--el-border-color-lighter);
+  --border-color-extra-light: var(--el-border-color-extra-light);
+
+  /* 背景色 */
+  --bg-color: var(--el-bg-color);
+  --bg-color-overlay: var(--el-bg-color-overlay);
+  --bg-color-page: var(--el-bg-color-page);
+  --bg-color-light: var(--el-fill-color-light);
+  --bg-color-lighter: var(--el-fill-color-lighter);
+  --bg-color-extra-light: var(--el-fill-color-blank);
+
+  /* 认证页面专用颜色 */
+  --auth-bg-gradient-start: var(--el-color-primary-light-9);
+  --auth-bg-gradient-end: var(--el-bg-color);
+  --auth-card-bg: var(--el-bg-color);
+  --auth-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --auth-input-border: var(--el-border-color);
+  --auth-input-focus-shadow: 0 0 0 1px var(--el-color-primary-light-3);
+} 

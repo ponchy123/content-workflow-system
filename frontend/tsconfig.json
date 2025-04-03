@@ -1,0 +1,88 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "verbatimModuleSyntax": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    /* Type Definitions */
+    "types": [
+      "vite/client",
+      "element-plus/global",
+      "@types/web-bluetooth",
+      "vitest/globals",
+      "@vue/test-utils",
+      "@vue/runtime-core",
+      "vue"
+    ],
+
+    /* Decorators */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    /* Declaration Files */
+    "declaration": true,
+    "declarationMap": true,
+
+    /* Vue Support */
+    "allowJs": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "vite.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/components/postal/PostalCodeSelector.vue",
+    "src/components/postal/PostalRateEditor.vue",
+    "src/components/postal/RemoteAreaEditor.vue",
+    "src/components/postal/ZoneEditor.vue",
+    "src/components/product/RuleConfig.vue",
+    "src/components/product/forms/SpecialRuleForm.vue",
+    "src/components/product/ProductRules.vue",
+    "src/components/product/RuleTester.vue",
+    "src/components/product/WeightBandEditor.vue",
+    "src/components/product/forms/ValueAddedServiceForm.vue",
+    "src/components/product/forms/WeightConfigForm.vue",
+    "src/components/product/BasicInfoForm.vue",
+    "src/components/product/BaseFeeTableForm.vue",
+    "src/components/product/SurchargeTableForm.vue",
+    "src/components/product/SeasonalFeeTableForm.vue",
+    "src/components/product/ComparisonTable.vue",
+    "src/components/product/ConfigDialog.vue",
+    "src/components/product/RuleDiffViewer.vue",
+    "src/components/product/TableProductComparison.vue",
+    "src/components/product/VersionHistory.vue",
+    "src/components/product/ProductSelector.vue"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+} 
