@@ -1,0 +1,45 @@
+{
+    "unauthorized_package_conditions": [
+        {
+            "type": "LENGTH_GIRTH",
+            "operator": ">",
+            "value": 165,
+            "description": "长+周长超过165英寸"
+        },
+        {
+            "type": "LENGTH",
+            "operator": ">",
+            "value": 108,
+            "description": "最长边超过108英寸"
+        },
+        {
+            "type": "WEIGHT",
+            "operator": ">",
+            "value": 150,
+            "description": "重量超过150磅"
+        }
+    ],
+    "thresholds": {
+        "length_girth": "165",
+        "length": "108",
+        "weight": "150"
+    },
+    "product_conditions": {
+        "FEDGND": [
+            {
+                "type": "LENGTH_GIRTH",
+                "operator": ">",
+                "value": 165,
+                "description": "FEDEX GROUND长+周长超过165英寸"
+            }
+        ],
+        "UPSGND": [
+            {
+                "type": "LENGTH_GIRTH",
+                "operator": ">",
+                "value": 165,
+                "description": "UPS GROUND长+周长超过165英寸"
+            }
+        ]
+    }
+}

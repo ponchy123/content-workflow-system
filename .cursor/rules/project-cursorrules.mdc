@@ -1,0 +1,375 @@
+---
+description: 运费计算系统开发指南
+globs: 
+alwaysApply: true
+---
+## 角色定义
+### 角色: 资深全栈开发工程师 + 资深架构师
+### 核心职责: 1、主导系统架构设计与技术决策；2、完成全栈开发工作（前端/Vue3 + 后端/Django）；3、设计数据库结构并优化查询性能；4、实现业务规则引擎和异常处理机制；5、协作产品团队完成需求对接与验收。
+
+
+## 一、系统总体架构
+
+### 1. 技术栈选型
+| 层级 | 技术选型 | 核心功能 |
+|------|----------|----------|
+| 前端 | Vue3 + Element Plus | 用户界面、数据可视化、文件处理 |
+| 后端 | Django REST Framework | API服务、业务编排、权限控制 |
+| 数据库 | MySQL 8.0 | 数据持久化、事务处理 |
+| 缓存 | Redis集群 | 分布式缓存、会话管理 |
+| 任务队列 | Celery | 异步任务处理、批量计算 |
+
+### 2. 系统分层架构
+| 层级 | 职责 | 关键特性 |
+|------|------|----------|
+| 展现层 | 用户交互、数据展示 | 响应式设计、主题定制 |
+| 应用层 | 服务编排、流程控制 | 服务解耦、接口版本控制 |
+| 领域层 | 业务逻辑、规则引擎 | DDD设计、充血模型 |
+| 基础设施层 | 技术实现、资源管理 | 高可用、可扩展 |
+
+## 二、核心业务模块
+
+### 1. 产品管理模块
+| 功能点 | 实现方式 | 技术要点 |
+|--------|----------|----------|
+| 产品配置 | 动态表单 | 字段验证、版本控制 |
+| 费率管理 | 矩阵式管理 | 批量导入、实时生效 |
+| 规则设置 | 可视化配置 | 规则编排、条件组合 |
+
+### 2. 计费规则引擎
+| 组件 | 功能 | 特点 |
+|------|------|------|
+| 基础运费计算器 | 重量分段计价 | 多维度匹配 |
+| 附加费计算器 | 条件触发计费 | 规则组合 |
+| 燃油费率应用器 | 动态费率计算 | 实时更新 |
+
+### 3. 邮编管理系统
+| 功能 | 实现 | 优化点 |
+|------|------|--------|
+| 分区管理 | 动态映射 | 快速检索 |
+| 偏远判定 | 规则匹配 | 缓存优化 |
+| 地址解析 | 智能识别 | 容错处理 |
+
+## 三、数据库设计
+
+### 1. 产品主表 (products)
+
+| 字段名 | 类型 | 是否为空 | 默认值 | 说明 |
+|-----|---|---|---|---|
+| product_id | CHAR(12) | 否 | - | 主键，产品唯一标识 |
+| provider_name | VARCHAR(100) | 否 | - | 服务商名称 |
+| product_name | VARCHAR(100) | 否 | - | 产品名称 |
+| dim_factor | DECIMAL(10,2) | 否 | - | 体积重系数 |
+| dim_factor_unit | VARCHAR(10) | 否 | - | 体积重系数单位(如lb/in³) |
+| effective_date | DATE | 否 | - | 生效日期 |
+| expiration_date | DATE | 否 | - | 失效日期 |
+| country | VARCHAR(50) | 否 | - | 国家 |
+| currency | VARCHAR(3) | 否 | - | 货币单位(如USD) |
+| weight_unit | VARCHAR(5) | 否 | - | 重量单位(KG/LB/OZ等) |
+| dim_unit | VARCHAR(5) | 否 | - | 尺寸单位(CM/IN等) |
+| description | TEXT | 是 | NULL | 产品描述 |
+| status | TINYINT(1) | 否 | 1 | 状态(1=启用,0=禁用) |
+| enabled_start_date | DATE | 是 | NULL | 启用开始日期 |
+| enabled_end_date | DATE | 是 | NULL | 启用结束日期 |
+| created_at | DATETIME | 否 | CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | DATETIME | 否 | CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间 |
+
+**索引:**
+- PRIMARY KEY (product_id)
+- INDEX idx_effective_date (effective_date, expiration_date)
+- INDEX idx_status (status)
+
+### 2. 基础运费表 (base_fees)
+
+| 字段名 | 类型 | 是否为空 | 默认值 | 说明 |
+|-----|---|---|---|---|
+| fee_id | INT | 否 | AUTO_INCREMENT | 主键，费用ID |
+| product_id | CHAR(12) | 否 | - | 外键，关联products表 |
+| weight | DECIMAL(10,3) | 否 | - | 重量值 |
+| weight_unit | VARCHAR(5) | 否 | - | 重量单位(OZ/LB/KG等) |
+| fee_type | VARCHAR(20) | 否 | - | 计费类型(STEP/LINEAR) |
+| zone1_price | DECIMAL(10,2) | 是 | 0 | Zone1基础价格 |
+| zone2_price | DECIMAL(10,2) | 是 | 0 | Zone2基础价格 |
+| zone3_price | DECIMAL(10,2) | 是 | 0 | Zone3基础价格 |
+| zone4_price | DECIMAL(10,2) | 是 | 0 | Zone4基础价格 |
+| zone5_price | DECIMAL(10,2) | 是 | 0 | Zone5基础价格 |
+| zone6_price | DECIMAL(10,2) | 是 | 0 | Zone6基础价格 |
+| zone7_price | DECIMAL(10,2) | 是 | 0 | Zone7基础价格 |
+| zone8_price | DECIMAL(10,2) | 是 | 0 | Zone8基础价格 |
+| zone17_price | DECIMAL(10,2) | 是 | 0 | Zone17基础价格 |
+| zone1_unit_price | DECIMAL(10,2) | 是 | 0 | Zone1单位重量价格 |
+| zone2_unit_price | DECIMAL(10,2) | 是 | 0 | Zone2单位重量价格 |
+| zone3_unit_price | DECIMAL(10,2) | 是 | 0 | Zone3单位重量价格 |
+| zone4_unit_price | DECIMAL(10,2) | 是 | 0 | Zone4单位重量价格 |
+| zone5_unit_price | DECIMAL(10,2) | 是 | 0 | Zone5单位重量价格 |
+| zone6_unit_price | DECIMAL(10,2) | 是 | 0 | Zone6单位重量价格 |
+| zone7_unit_price | DECIMAL(10,2) | 是 | 0 | Zone7单位重量价格 |
+| zone8_unit_price | DECIMAL(10,2) | 是 | 0 | Zone8单位重量价格 |
+| zone17_unit_price | DECIMAL(10,2) | 是 | 0 | Zone17单位重量价格 |
+| created_at | DATETIME | 否 | CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | DATETIME | 否 | CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间 |
+
+**索引:**
+- PRIMARY KEY (fee_id)
+- INDEX idx_product_weight (product_id, weight, fee_type)
+
+### 3. 附加费表 (surcharges)
+
+| 字段名 | 类型 | 是否为空 | 默认值 | 说明 |
+|-----|---|---|---|---|
+| surcharge_id | INT | 否 | AUTO_INCREMENT | 主键，附加费ID |
+| product_id | CHAR(12) | 否 | - | 外键，关联products表 |
+| surcharge_type | VARCHAR(50) | 否 | - | 附加费类型 |
+| sub_type | VARCHAR(50) | 是 | NULL | 子类型 |
+| condition_desc | TEXT | 是 | NULL | 条件描述 |
+| zone1_fee | DECIMAL(10,2) | 是 | 0 | Zone1附加费 |
+| zone2_fee | DECIMAL(10,2) | 是 | 0 | Zone2附加费 |
+| zone3_fee | DECIMAL(10,2) | 是 | 0 | Zone3附加费 |
+| zone4_fee | DECIMAL(10,2) | 是 | 0 | Zone4附加费 |
+| zone5_fee | DECIMAL(10,2) | 是 | 0 | Zone5附加费 |
+| zone6_fee | DECIMAL(10,2) | 是 | 0 | Zone6附加费 |
+| zone7_fee | DECIMAL(10,2) | 是 | 0 | Zone7附加费 |
+| zone8_fee | DECIMAL(10,2) | 是 | 0 | Zone8附加费 |
+| zone17_fee | DECIMAL(10,2) | 是 | 0 | Zone17附加费 |
+| created_at | DATETIME | 否 | CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | DATETIME | 否 | CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间 |
+
+**索引:**
+- PRIMARY KEY (surcharge_id)
+- INDEX idx_product_type (product_id, surcharge_type, sub_type)
+
+### 4. 旺季附加费表 (peak_season_surcharges)
+
+| 字段名 | 类型 | 是否为空 | 默认值 | 说明 |
+|-----|---|---|---|---|
+| pss_id | INT | 否 | AUTO_INCREMENT | 主键，旺季附加费ID |
+| product_id | CHAR(12) | 否 | - | 外键，关联products表 |
+| surcharge_type | VARCHAR(50) | 否 | - | 附加费类型 |
+| start_date | DATE | 否 | - | 开始日期 |
+| end_date | DATE | 否 | - | 结束日期 |
+| fee_amount | DECIMAL(10,2) | 否 | 0 | 费用金额 |
+| created_at | DATETIME | 否 | CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | DATETIME | 否 | CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间 |
+
+**索引:**
+- PRIMARY KEY (pss_id)
+- INDEX idx_product_type (product_id, surcharge_type)
+
+
+### 5. 批量计算任务表 (batch_calculation_tasks)
+| 字段名称 | 字段类型 | 是否必填 | 默认值 | 业务说明 |
+|---------|----------|---------|--------|----------|
+| task_id | CHAR(16) | 是 | - | 任务ID |
+| file_name | VARCHAR(255) | 是 | - | 上传文件名 |
+| file_path | VARCHAR(255) | 是 | - | 文件存储路径 |
+| total_records | INT | 否 | 0 | 总记录数 |
+| processed_records | INT | 否 | 0 | 已处理记录数 |
+| success_records | INT | 否 | 0 | 成功记录数 |
+| failed_records | INT | 否 | 0 | 失败记录数 |
+| status | ENUM | 是 | 'PENDING' | 任务状态 |
+| created_by | CHAR(12) | 是 | - | 创建用户ID |
+| created_at | TIMESTAMP | 是 | CURRENT_TIMESTAMP | 创建时间 |
+| completed_at | TIMESTAMP | 否 | null | 完成时间 |
+
+## 二、邮编管理模块
+
+### 1. 邮编分区表 (zip_zones)
+| 字段名称 | 字段类型 | 是否必填 | 默认值 | 业务说明 |
+|---------|----------|---------|--------|----------|
+| zone_id | CHAR(8) | 是 | - | 分区记录ID |
+| provider_id | INT | 是 | - | 服务商ID |
+| origin_zip | VARCHAR(10) | 是 | - | 起始邮编 |
+| dest_zip_start | VARCHAR(10) | 是 | - | 目的邮编起始值 |
+| dest_zip_end | VARCHAR(10) | 是 | - | 目的邮编结束值 |
+| zone_number | TINYINT | 是 | - | 分区号（1-8） |
+
+
+### 2. 偏远地区表 (remote_areas)
+| 字段名称 | 字段类型 | 是否必填 | 默认值 | 业务说明 |
+|---------|----------|---------|--------|----------|
+| provider_id | INT | 是 | - | 服务商ID |
+| origin_zip | VARCHAR(10) | 是 | - | 起始邮编 |
+| zip_code | VARCHAR(10) | 是 | - | 偏远地区邮编 |
+| remote_level | TINYINT | 是 | 1 | 偏远等级：1-一级，2-二级，3-三级 |
+
+## 三、费率管理模块
+
+### 1. 燃油费率表 (fuel_rates)
+| 字段名称 | 字段类型 | 是否必填 | 默认值 | 业务说明 |
+|---------|----------|---------|--------|----------|
+| rate_id | CHAR(8) | 是 | - | 费率记录ID |
+| provider_id | INT | 是 | - | 服务商ID |
+| effective_date | DATE | 是 | - | 生效日期 |
+| expiration_date | DATE | 是 | - | 失效日期 |
+| rate_percent | DECIMAL(5,2) | 是 | 0.00 | 燃油费率百分比 |
+| update_time | TIMESTAMP | 是 | CURRENT_TIMESTAMP | 更新时间 |
+
+
+## 四、权限管理模块
+
+### 1. 用户表 (users)
+| 字段名称 | 字段类型 | 是否必填 | 默认值 | 业务说明 |
+|---------|----------|---------|--------|----------|
+| user_id | CHAR(12) | 是 | - | 用户ID |
+| username | VARCHAR(50) | 是 | - | 用户名 |
+| password_hash | CHAR(60) | 是 | - | 密码哈希值 |
+| email | VARCHAR(100) | 是 | - | 电子邮箱 |
+| role_id | INT | 是 | - | 角色ID |
+| status | TINYINT | 是 | 1 | 状态：1-启用，0-禁用 |
+| last_login | TIMESTAMP | 否 | null | 最后登录时间 |
+
+### 2. 角色表 (roles)
+| 字段名称 | 字段类型 | 是否必填 | 默认值 | 业务说明 |
+|---------|----------|---------|--------|----------|
+| role_id | INT | 是 | - | 角色ID |
+| role_name | VARCHAR(50) | 是 | - | 角色名称 |
+| permissions | JSON | 是 | {} | 权限集合 |
+| description | TEXT | 否 | null | 角色描述 |
+| created_at | TIMESTAMP | 是 | CURRENT_TIMESTAMP | 创建时间 |
+
+
+## 五、数据完整性约束
+
+### 1. 主键约束
+- 所有表必须设置主键
+- 使用自然键或代理键根据业务需求选择
+- 确保主键值的唯一性和不可重复性
+
+### 2. 外键约束
+- 建立表间的引用关系
+- 设置级联更新和删除规则
+- 确保数据的引用完整性
+
+### 3. 业务约束
+- 日期字段的有效性验证
+- 数值字段的范围检查
+- 状态字段的值域限制
+
+## 六、性能优化建议
+
+### 1. 索引设计
+- 对常用查询字段建立索引
+- 针对复合查询条件创建组合索引
+- 避免过多索引影响写入性能
+
+### 2. 分区策略
+- 大表按时间范围分区
+- 按服务商或地区分区
+- 历史数据归档处理
+
+### 3. 查询优化
+- 使用覆盖索引
+- 避免全表扫描
+- 合理使用视图
+
+## 七、数据安全设计
+
+### 1. 访问控制
+- 基于角色的权限管理
+- 数据行级别的访问控制
+- 敏感操作审计日志
+
+### 2. 数据加密
+- 密码等敏感信息加密存储
+- 传输数据的加密处理
+- 数据备份的加密保护
+
+### 3. 备份策略
+- 定时全量备份
+- 增量备份
+- 多副本异地存储
+
+
+## 四、性能优化方案
+
+### 1. 缓存策略
+| 级别 | 实现 | 目标命中率 |
+|------|------|------------|
+| 本地缓存 | LRU算法 | 85% |
+| Redis集群 | 分片存储 | 95% |
+| 数据库缓存 | 查询缓存 | 99% |
+
+### 2. 计算优化
+| 方案 | 实现 | 效果 |
+|------|------|------|
+| 并行计算 | Celery Worker | 提升吞吐量 |
+| 预计算 | 规则预处理 | 减少响应时间 |
+| 批量处理 | 数据分片 | 优化资源利用 |
+
+## 五、安全保障体系
+
+### 1. 访问控制
+| 层面 | 措施 | 效果 |
+|------|------|------|
+| 接口认证 | JWT Token | 身份验证 |
+| 数据权限 | RBAC模型 | 精细化控制 |
+| 操作审计 | 区块链存证 | 防篡改 |
+
+### 2. 数据安全
+| 方面 | 实现 | 目标 |
+|------|------|------|
+| 传输加密 | TLS 1.3 | 防窃听 |
+| 存储加密 | AES-256 | 数据保护 |
+| 备份策略 | 异地多副本 | 容灾恢复 |
+
+## 六、监控告警体系
+
+### 1. 监控指标
+| 类型 | 指标 | 阈值 |
+|------|------|------|
+| 业务指标 | 计算准确率 | ≥99.99% |
+| 性能指标 | 响应时间 | ≤300ms |
+| 系统指标 | CPU使用率 | ≤80% |
+
+### 2. 告警策略
+| 级别 | 触发条件 | 响应方式 |
+|------|----------|----------|
+| 严重 | 服务中断 | 短信+电话 |
+| 警告 | 性能下降 | 邮件通知 |
+| 提示 | 资源预警 | 系统提醒 |
+
+## 七、部署架构
+
+###Loophole + Nginx + Gunicorn 方案
+Loophole：
+另一个内网穿透工具，类似 ngrok 但有自己的特点
+提供免费的子域名
+安装简单，使用命令行工具
+Nginx：
+高性能 Web 服务器和反向代理
+可以处理静态资源，提高性能
+提供负载均衡、缓存等功能
+Gunicorn：
+Python WSGI HTTP 服务器
+专为运行 Django 应用设计
+比 Django 自带的开发服务器更稳定、更安全
+
+### 1. 环境规划
+| 环境 | 配置 | 用途 |
+|------|------|------|
+| 开发环境 | 单机部署 | 日常开发 |
+| 测试环境 | 基础集群 | 功能测试 |
+| 生产环境 | 高可用集群 | 线上服务 |
+
+### 2. 容器化部署
+| 组件 | 技术选型 | 说明 |
+|------|----------|------|
+| 容器编排 | Kubernetes | 服务编排 |
+| 服务网格 | Istio | 流量管理 |
+| 持续部署 | GitLab CI/CD | 自动化部署 |
+
+## 八、扩展性设计
+
+### 1. 接口设计
+| 类型 | 实现 | 特点 |
+|------|------|------|
+| REST API | Django REST Framework | 标准化接口 |
+| GraphQL | Graphene | 灵活查询 |
+| WebSocket | Django Channels | 实时推送 |
+
+### 2. 多租户支持
+| 方面 | 实现 | 说明 |
+|------|------|------|
+| 数据隔离 | Schema隔离 | 租户数据独立 |
+| 配置隔离 | 动态配置 | 租户个性化 |
+| 资源隔离 | 资源配额 | 公平使用 |

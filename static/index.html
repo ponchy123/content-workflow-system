@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:;">
+    <title>物流运费计算系统</title>
+    <script>
+      // 更强大的模块加载错误处理
+      (function() {
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+          return originalFetch.apply(this, args).catch(err => {
+            console.warn('拦截到fetch错误:', err.message);
+            // 如果是模块加载错误，返回一个空模块
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('/workers/')) {
+              console.warn('拦截到workers模块加载请求，返回空模块');
+              return new Response('export default {}', {
+                headers: { 'Content-Type': 'application/javascript' }
+              });
+            }
+            return Promise.reject(err);
+          });
+        };
+        
+        // 处理所有错误
+        window.addEventListener('error', function(e) {
+          // 检查是否是模块加载错误
+          if (e.message && (
+            e.message.includes('Failed to load module script') || 
+            e.message.includes('MIME type') ||
+            e.message.includes('workers')
+          )) {
+            console.warn('拦截到模块加载错误:', e.message);
+            // 防止错误传播
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+        }, true);
+        
+        // 处理未处理的promise rejection
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e.reason && 
+              (e.reason.message && 
+               (e.reason.message.includes('Failed to load module script') || 
+                e.reason.message.includes('MIME type') ||
+                e.reason.message.includes('workers')))) {
+            console.warn('拦截到未处理的Promise rejection:', e.reason.message);
+            e.preventDefault();
+            return false;
+          }
+        });
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-DyxCg8e9.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-BxNawP4f.js">
+    <link rel="stylesheet" crossorigin href="/assets/vendor-BmpqmmFU.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DD91-WgF.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html> 
