@@ -1,0 +1,189 @@
+version: '3.8'
+
+services:
+  # 公共服务 - 不参与蓝绿部署
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - a2a_network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
+    networks:
+      - a2a_network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - a2a_network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  elasticsearch:
+    image: elasticsearch:8.10.4
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    networks:
+      - a2a_network
+    restart: unless-stopped
+
+  logstash:
+    image: logstash:8.10.4
+    ports:
+      - "5044:5044"
+    volumes:
+      - ./monitoring/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+    networks:
+      - a2a_network
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  kibana:
+    image: kibana:8.10.4
+    ports:
+      - "5601:5601"
+    networks:
+      - a2a_network
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # 蓝绿部署服务
+  blue_api_gateway:
+    image: yourusername/api_gateway:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    ports:
+      - "8001:8000"
+    environment:
+      - NODE_ENV=production
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - MCP_REGISTRY_URL=http://blue_mcp_registry:8000
+    networks:
+      - a2a_network
+    depends_on:
+      - rabbitmq
+      - blue_mcp_registry
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  blue_mcp_registry:
+    image: yourusername/mcp_registry:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    environment:
+      - FLASK_ENV=production
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - a2a_network
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
+  blue_frontend:
+    image: yourusername/frontend:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    ports:
+      - "8081:80"
+    networks:
+      - a2a_network
+    depends_on:
+      - blue_api_gateway
+    restart: unless-stopped
+
+  blue_data_analysis_agent:
+    image: yourusername/data_analysis_agent:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - MCP_REGISTRY_URL=http://blue_mcp_registry:8000
+      - METRICS_PORT=8002
+    networks:
+      - a2a_network
+    depends_on:
+      - rabbitmq
+      - blue_mcp_registry
+    restart: unless-stopped
+
+  green_api_gateway:
+    image: yourusername/api_gateway:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    ports:
+      - "8002:8000"
+    environment:
+      - NODE_ENV=production
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - MCP_REGISTRY_URL=http://green_mcp_registry:8000
+    networks:
+      - a2a_network
+    depends_on:
+      - rabbitmq
+      - green_mcp_registry
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  green_mcp_registry:
+    image: yourusername/mcp_registry:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    environment:
+      - FLASK_ENV=production
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - a2a_network
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
+  green_frontend:
+    image: yourusername/frontend:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    ports:
+      - "8082:80"
+    networks:
+      - a2a_network
+    depends_on:
+      - green_api_gateway
+    restart: unless-stopped
+
+  green_data_analysis_agent:
+    image: yourusername/data_analysis_agent:${BRANCH_NAME}-${IMAGE_TAG:-latest}
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - MCP_REGISTRY_URL=http://green_mcp_registry:8000
+      - METRICS_PORT=8003
+    networks:
+      - a2a_network
+    depends_on:
+      - rabbitmq
+      - green_mcp_registry
+    restart: unless-stopped
+
+networks:
+  a2a_network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+  prometheus_data:
+  elasticsearch_data:

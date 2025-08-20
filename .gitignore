@@ -1,0 +1,38 @@
+# 忽略数据库文件
+mysql_data/
+
+# 忽略日志文件
+*.log
+
+# 忽略临时文件
+*.tmp
+
+# 忽略node_modules目录
+node_modules/
+
+# 忽略环境变量文件
+.env
+
+# 忽略Docker配置
+.docker/
+
+# 忽略二进制数据
+binaryData/
+
+# 忽略n8n数据
+n8n_data/
+
+# 忽略rabbitmq数据
+rabbitmq_data/
+
+# 忽略编译后的前端文件
+frontend/build/
+
+# 忽略IDE配置
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,195 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [ 'staging', 'production' ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install API Gateway dependencies
+      working-directory: ./api_gateway
+      run: npm ci
+
+    - name: Run API Gateway tests
+      working-directory: ./api_gateway
+      run: npm test -- --coverage
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install MCP Registry dependencies
+      working-directory: ./mcp_registry
+      run: pip install -r requirements.txt
+
+    - name: Run MCP Registry tests
+      working-directory: ./mcp_registry
+      run: pytest tests/
+
+    - name: Install Data Analysis Agent dependencies
+      working-directory: ./agents/data_analysis
+      run: pip install -r requirements.txt
+
+    - name: Run Data Analysis Agent tests
+      working-directory: ./agents/data_analysis
+      run: pytest tests/
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+    - name: Extract branch name
+      id: extract_branch
+      run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+    - name: Build and push API Gateway image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./api_gateway
+        push: true
+        tags: yourusername/api_gateway:${{ env.BRANCH_NAME }}-${{ github.sha }},yourusername/api_gateway:${{ env.BRANCH_NAME }}
+        cache-from: type=registry,ref=yourusername/api_gateway:buildcache
+        cache-to: type=registry,ref=yourusername/api_gateway:buildcache,mode=max
+
+    - name: Build and push Frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: yourusername/frontend:${{ env.BRANCH_NAME }}-${{ github.sha }},yourusername/frontend:${{ env.BRANCH_NAME }}
+        cache-from: type=registry,ref=yourusername/frontend:buildcache
+        cache-to: type=registry,ref=yourusername/frontend:buildcache,mode=max
+
+    - name: Build and push MCP Registry image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./mcp_registry
+        push: true
+        tags: yourusername/mcp_registry:${{ env.BRANCH_NAME }}-${{ github.sha }},yourusername/mcp_registry:${{ env.BRANCH_NAME }}
+        cache-from: type=registry,ref=yourusername/mcp_registry:buildcache
+        cache-to: type=registry,ref=yourusername/mcp_registry:buildcache,mode=max
+
+    - name: Build and push Data Analysis Agent image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./agents/data_analysis
+        push: true
+        tags: yourusername/data_analysis_agent:${{ env.BRANCH_NAME }}-${{ github.sha }},yourusername/data_analysis_agent:${{ env.BRANCH_NAME }}
+        cache-from: type=registry,ref=yourusername/data_analysis_agent:buildcache
+        cache-to: type=registry,ref=yourusername/data_analysis_agent:buildcache,mode=max
+
+  deploy_staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to staging environment
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USERNAME }}
+        key: ${{ secrets.STAGING_KEY }}
+        script: |
+          cd /path/to/staging/app
+          export BRANCH_NAME=${{ env.BRANCH_NAME }}
+          docker-compose pull
+          docker-compose up -d
+          sleep 10
+          # 健康检查
+          curl --fail http://localhost:8000/health || exit 1
+
+  deploy_production:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to production (Blue-Green)
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        key: ${{ secrets.PRODUCTION_KEY }}
+        script: |
+          cd /path/to/production/app
+          # 确定当前活动的颜色
+          CURRENT_COLOR=$(cat current_color.txt || echo "blue")
+          if [ "$CURRENT_COLOR" = "blue" ]; then
+            NEW_COLOR="green"
+          else
+            NEW_COLOR="blue"
+          fi
+
+          # 更新新颜色的服务
+          export COLOR=$NEW_COLOR
+          export IMAGE_TAG=${{ github.sha }}
+          docker-compose -f docker-compose.blue-green.yml up -d $NEW_COLOR
+
+          # 等待服务启动并进行健康检查
+          sleep 15
+          HEALTH_CHECK_URL=http://localhost:8000/health?color=$NEW_COLOR
+          curl --fail $HEALTH_CHECK_URL || exit 1
+
+          # 切换负载均衡器
+          sed -i "s/current_color=.*/current_color=$NEW_COLOR/" nginx.conf
+          sudo systemctl reload nginx
+
+          # 记录当前颜色
+          echo $NEW_COLOR > current_color.txt
+
+          # 停止旧颜色的服务
+          docker-compose -f docker-compose.blue-green.yml stop $CURRENT_COLOR
+
+  notify:
+    needs: [deploy_staging, deploy_production]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Send deployment notification
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const status = '${{ job.status }}';
+          const environment = '${{ github.ref == 'refs/heads/main' ? 'production' : 'staging' }}';
+          github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: context.payload.deployment.id,
+            state: status,
+            environment: environment,
+            log_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+            description: `Deployment to ${environment} ${status === 'success' ? 'succeeded' : 'failed'}`
+          });

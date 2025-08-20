@@ -1,0 +1,226 @@
+{
+  "name": "内容创作与分发工作流",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "开始",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "scheduleExpression": "0 9 * * *",
+        "timezone": "Asia/Shanghai"
+      },
+      "name": "每日灵感收集触发器",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.feedly.com/v3/streams/contents",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{$secrets.feedly_api_key}}"
+        },
+        "queryParameters": {
+          "streamId": "user/123456/category/tech",
+          "count": "20"
+        }
+      },
+      "name": "Feedly RSS获取",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        450,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// 筛选有价值的文章\nconst items = $input.all();\nconst filteredItems = items.filter(item => {\n  const title = item.json.title.toLowerCase();\n  const summary = item.json.summary.toLowerCase();\n  // 关键词筛选\n  const keywords = ['ai', '大模型', '产品经理', '创业', '技术趋势'];\n  return keywords.some(keyword => title.includes(keyword) || summary.includes(keyword));\n});\nreturn filteredItems;"
+      },
+      "name": "内容筛选",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "database": "notion",
+        "operation": "create",
+        "table": "灵感收集箱",
+        "data": {
+          "标题": "={{$node['内容筛选'].json.title}}",
+          "摘要": "={{$node['内容筛选'].json.summary}}",
+          "来源链接": "={{$node['内容筛选'].json.alternate.href}}",
+          "标签": "={{$node['内容筛选'].json.tags.map(tag => '#' + tag).join(' ')}}",
+          "创建时间": "={{new Date().toISOString()}}"
+        }
+      },
+      "name": "保存到Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 1,
+      "position": [
+        850,
+        400
+      ],
+      "credentials": {
+        "notionApi": "notion_credentials"
+      }
+    },
+    {
+      "parameters": {
+        "scheduleExpression": "0 20 * * 0",
+        "timezone": "Asia/Shanghai"
+      },
+      "name": "每周选题评估触发器",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "请你作为一位顶尖的AI产品经理，针对以下灵感列表，评估每个选题的时效性、深度潜力、转化潜力，并给出优先级排序。\n\n灵感列表：\n{{$node['获取Notion灵感列表'].json.items.map(item => `- ${item.properties.标题.title[0].text.content}`).join('\n')}}\n\n评估标准：\n1. 时效性：是否能赶上当前热点\n2. 深度潜力：是否有足够深度写成长文\n3. 转化潜力：是否能吸引目标受众\n\n请给出Top 3优先级选题，并说明理由。",
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.7
+      },
+      "name": "AI辅助选题评估",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        650,
+        550
+      ],
+      "credentials": {
+        "openAiApi": "openai_credentials"
+      }
+    },
+    {
+      "parameters": {
+        "channelId": "{{$secrets.discord_channel_id}}",
+        "content": "本周选题评估结果：\n{{$node['AI辅助选题评估'].json.choices[0].message.content}}"
+      },
+      "name": "通知到Discord",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [
+        850,
+        550
+      ],
+      "credentials": {
+        "discordBot": "discord_bot_credentials"
+      }
+    },
+    {
+      "parameters": {
+        "database": "notion",
+        "operation": "query",
+        "table": "灵感收集箱",
+        "query": {
+          "filter": {
+            "property": "状态",
+            "select": {
+              "equals": "未评估"
+            }
+          }
+        }
+      },
+      "name": "获取Notion灵感列表",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 1,
+      "position": [
+        450,
+        550
+      ],
+      "credentials": {
+        "notionApi": "notion_credentials"
+      }
+    }
+  ],
+  "connections": {
+    "每日灵感收集触发器": {
+      "main": [
+        [
+          {
+            "node": "Feedly RSS获取",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feedly RSS获取": {
+      "main": [
+        [
+          {
+            "node": "内容筛选",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "内容筛选": {
+      "main": [
+        [
+          {
+            "node": "保存到Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "每周选题评估触发器": {
+      "main": [
+        [
+          {
+            "node": "获取Notion灵感列表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取Notion灵感列表": {
+      "main": [
+        [
+          {
+            "node": "AI辅助选题评估",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI辅助选题评估": {
+      "main": [
+        [
+          {
+            "node": "通知到Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "1"
+}

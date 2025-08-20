@@ -1,0 +1,69 @@
+groups:
+- name: service_health
+  rules:
+  - alert: ServiceDown
+    expr: up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "服务 {{ $labels.job }} 不可用"
+      description: "服务 {{ $labels.job }} 已下线超过5分钟"
+
+  - alert: HighRequestLatency
+    expr: avg(request_latency_seconds) by (job) > 1
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "服务 {{ $labels.job }} 请求延迟过高"
+      description: "服务 {{ $labels.job }} 平均请求延迟超过1秒，持续3分钟"
+
+  - alert: HighErrorRate
+    expr: sum(rate(request_errors_total[5m])) by (job) / sum(rate(requests_total[5m])) by (job) > 0.05
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "服务 {{ $labels.job }} 错误率过高"
+      description: "服务 {{ $labels.job }} 错误率超过5%，持续2分钟"
+
+- name: api_performance
+  rules:
+  - alert: ApiRateLimitExceeded
+    expr: api_rate_limit_exceeded_percent > 20
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "API 限流百分比过高"
+      description: "API 限流百分比超过20%，持续1分钟"
+
+  - alert: HighActiveUsers
+    expr: current_active_users > 1000
+    for: 5m
+    labels:
+      severity: info
+    annotations:
+      summary: "当前活跃用户数过高"
+      description: "当前活跃用户数超过1000，持续5分钟"
+
+- name: resource_utilization
+  rules:
+  - alert: HighCpuUsage
+    expr: sum(rate(cpu_usage_seconds_total[5m])) by (instance) > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "实例 {{ $labels.instance }} CPU使用率过高"
+      description: "实例 {{ $labels.instance }} CPU使用率超过80%，持续5分钟"
+
+  - alert: HighMemoryUsage
+    expr: memory_usage_bytes / memory_limit_bytes > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "实例 {{ $labels.instance }} 内存使用率过高"
+      description: "实例 {{ $labels.instance }} 内存使用率超过80%，持续5分钟"

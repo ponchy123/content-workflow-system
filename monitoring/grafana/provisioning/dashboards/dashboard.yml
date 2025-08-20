@@ -1,0 +1,14 @@
+apiVersion: 1
+
+dashboards:
+- name: A2A_MCP_System_Monitoring
+  folder: A2A_MCP
+  file: /etc/grafana/provisioning/dashboards/system_overview.json
+  datasource: Prometheus
+  updateIntervalSeconds: 10
+
+- name: User_API_Performance
+  folder: A2A_MCP
+  file: /etc/grafana/provisioning/dashboards/user_api_performance.json
+  datasource: Prometheus
+  updateIntervalSeconds: 10

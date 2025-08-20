@@ -1,0 +1,423 @@
+:root {
+  --primary-color: #3f51b5;
+  --primary-light: #757de8;
+  --primary-dark: #002984;
+  --secondary-color: #f50057;
+  --secondary-light: #ff5c8d;
+  --secondary-dark: #c51162;
+  --background-color: #f5f5f5;
+  --card-color: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-hint: #9e9e9e;
+  --border-color: #e0e0e0;
+  --success-color: #4caf50;
+  --error-color: #f44336;
+  --warning-color: #ff9800;
+  --info-color: #2196f3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 应用栏样式 */
+.app-bar {
+  z-index: 1201;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.menu-button {
+  margin-right: 16px;
+  color: white !important;
+}
+
+.app-title {
+  flex-grow: 1;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.app-bar-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* 主内容区域样式 */
+.main-content {
+  flex-grow: 1;
+  padding-top: 64px;
+  transition: all 0.3s ease;
+}
+
+.content-container {
+  padding: 24px 0;
+}
+
+/* 抽屉和侧边栏样式 */
+.desktop-drawer {
+  width: 240px;
+  flex-shrink: 0;
+  background-color: var(--card-color);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* 卡片组件样式 */
+.card {
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--primary-dark);
+}
+
+/* 按钮样式 */
+.button-primary {
+  background-color: var(--primary-color);
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.button-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.button-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.button-secondary:hover {
+  background-color: var(--secondary-dark);
+  transform: translateY(-2px);
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+}
+
+/* 登录和注册页面样式 */
+.login-container, .register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  padding: 24px;
+  background-color: var(--background-color);
+}
+
+.login-card, .register-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  background-color: var(--card-color);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.login-card:hover, .register-card:hover {
+  transform: translateY(-5px);
+}
+
+.login-title, .register-title {
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--primary-dark);
+  font-size: 1.8rem;
+}
+
+.login-form, .register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-button, .register-button {
+  margin-top: 16px;
+  background-color: var(--primary-color);
+  color: white;
+  text-transform: none;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.login-button:hover, .register-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.register-link, .login-link {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.register-link a, .login-link a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.register-link a:hover, .login-link a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* 懒加载样式 */
+.loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease-in-out forwards;
+  opacity: 0;
+}
+
+/* 首页样式 */
+.home-container {
+  padding: 2rem 0;
+}
+
+.home-container .main-title {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.home-container .subtitle {
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto 2rem;
+}
+
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.card-item {
+  display: flex;
+  justify-content: center;
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  color: inherit;
+}
+
+.card-description {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.action-button {
+  transition: all 0.3s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.call-to-action {
+  margin-top: 3rem;
+}
+
+.call-to-action .MuiButton-root {
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  transition: all 0.3s ease;
+}
+
+.call-to-action .MuiButton-root:hover {
+  background: linear-gradient(90deg, var(--primary-dark), var(--secondary-dark));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 响应式设计增强 */
+@media (max-width: 1200px) {
+  .cards-grid {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 968px) {
+  .home-container .main-title {
+    font-size: 2rem;
+  }
+
+  .home-container .subtitle {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-container .main-title {
+    font-size: 1.8rem;
+  }
+
+  .card-item {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-container .main-title {
+    font-size: 1.5rem;
+  }
+
+  .home-container .subtitle {
+    font-size: 1rem;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+}
+
+/* 加载指示器 */
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+}
+
+/* 任务卡片样式 */
+.task-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.task-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.task-info {
+  flex-grow: 1;
+}
+
+.task-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.task-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-processing {
+  background-color: #e3f2fd;
+  color: #0275d8;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-failed {
+  background-color: #f8d7da;
+  color: #721c24;
+}
